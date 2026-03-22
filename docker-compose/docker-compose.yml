@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  # 1. Nginx
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - certbot-etc:/etc/letsencrypt
+      - certbot-www:/usr/share/nginx/html
+    networks:
+      - app-network
+    depends_on:
+      - backend
+    restart: always
+
+  # 2. Certbot
+  certbot:
+    image: certbot/certbot:latest
+    container_name: certbot
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-www:/var/www/certbot
+    entrypoint: >
+      sh -c "while :; do
+      certbot renew --webroot -w /var/www/certbot --quiet;
+      sleep 12h;
+      done"
+    depends_on:
+      - nginx
+    restart: always
+    networks:
+      - app-network
+
+  # 3. Nginx Reloader
+  nginx-reloader:
+    image: docker:27-cli
+    container_name: nginx-reloader
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - certbot-etc:/etc/letsencrypt:ro
+    entrypoint: >
+      sh -c 'FILE=/etc/letsencrypt/live/woong2e-prod.com/fullchain.pem;
+      PREV="$(cksum "$$FILE" 2>/dev/null || true)";
+      while :; do
+        CURR="$(cksum "$$FILE" 2>/dev/null || true)";
+        if [ "$$CURR" != "$$PREV" ] && [ -n "$$CURR" ]; then
+          echo "[reloader] cert changed -> nginx reload";
+          docker exec nginx nginx -s reload || true;
+          PREV="$$CURR";
+        fi;
+        sleep 300;
+      done'
+    depends_on:
+      - nginx
+    restart: always
+    networks:
+      - app-network
+
+  # 4. Backend (Go Server)
+  backend:
+    image: ${DOCKER_HUB_USERNAME}/portfolio-backend:latest
+    container_name: backend
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - portfolios-data:/data
+      - ./portfolio.db:/app/portfolio.db
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    external: true
+
+volumes:
+  certbot-etc:
+  certbot-www:
+  portfolios-data:

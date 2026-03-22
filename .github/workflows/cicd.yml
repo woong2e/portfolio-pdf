@@ -1,0 +1,114 @@
+name: Build & Deploy to EC2
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      backend: ${{ steps.filter.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+              - 'nginx/**'
+            backend:
+              - 'backend/**'
+
+  build-push-backend:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.backend == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Build & Push Backend Image
+        run: |
+          docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/portfolio-backend:latest -f backend/Dockerfile backend
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/portfolio-backend:latest
+
+  build-push-frontend:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.frontend == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Build & Push Frontend Image
+        run: |
+          docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/portfolio-frontend:latest -f frontend/Dockerfile frontend
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/portfolio-frontend:latest
+
+  deploy:
+    needs: [detect-changes, build-push-backend, build-push-frontend]
+    if: |
+      always() && 
+      (needs.build-push-backend.result == 'success' || needs.build-push-backend.result == 'skipped') &&
+      (needs.build-push-frontend.result == 'success' || needs.build-push-frontend.result == 'skipped') &&
+      (needs.detect-changes.outputs.frontend == 'true' || needs.detect-changes.outputs.backend == 'true')
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Copy Config Files via SCP
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.AWS_EC2_HOST }}
+          username: ${{ secrets.AWS_EC2_USER }}
+          key: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
+          source: "docker-compose/*,frontend/nginx.conf,deploy/*"
+          target: "/home/${{ secrets.AWS_EC2_USER }}/deploy"
+          strip_components: 1
+
+      - name: Execute Deploy Script
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          ENV_FILE_CONTENT: ${{ secrets.ENV_FILE }}
+          CHANGED_FRONTEND: ${{ needs.detect-changes.outputs.frontend }}
+          CHANGED_BACKEND: ${{ needs.detect-changes.outputs.backend }}
+        with:
+          host: ${{ secrets.AWS_EC2_HOST }}
+          username: ${{ secrets.AWS_EC2_USER }}
+          key: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
+          envs: ENV_FILE_CONTENT,CHANGED_FRONTEND,CHANGED_BACKEND
+          script: |
+            cd /home/${{ secrets.AWS_EC2_USER }}/deploy
+            
+            # .env 파일 생성
+            echo "$ENV_FILE_CONTENT" > .env
+            
+            # 스크립트 위치 확인 및 실행
+            if [ -f "deploy/deploy.sh" ]; then
+                cd deploy
+            fi
+            
+            chmod +x deploy.sh
+            ./deploy.sh
