@@ -5,11 +5,13 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminDetail from './pages/admin/AdminDetail';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
+import ToastContainer from './components/Toast';
 
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <ToastContainer />
         <Routes>
           <Route path="/" element={<Navigate to="/admin" replace />} />
           <Route path="/view/:uuid" element={<ViewPortfolio />} />
