@@ -1,9 +1,9 @@
 # 빌드 단계
-FROM golang:1.21-alpine AS builder
+FROM golang:alpine AS builder
 
 WORKDIR /app
 
-# SQLite는 CGO를 요구합니다. (C 컴파일러 설치)
+# SQLite는 CGO를 요구 (C 컴파일러 설치)
 RUN apk add --no-cache gcc musl-dev
 
 # go.mod 및 go.sum 복사
