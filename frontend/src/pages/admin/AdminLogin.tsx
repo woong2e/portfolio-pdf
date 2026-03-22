@@ -2,6 +2,7 @@ import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Shield } from 'lucide-react';
+import { showToast } from '../../components/Toast';
 
 export default function AdminLogin() {
   const { login } = useAuth();
@@ -30,13 +31,13 @@ export default function AdminLogin() {
                   await login(credentialResponse.credential);
                   navigate('/admin');
                 } catch (err) {
-                  alert('로그인 권한이 없거나 오류가 발생했습니다.');
+                  showToast('로그인 권한이 없거나 오류가 발생했습니다.', 'error');
                 }
               }
             }}
             onError={() => {
               console.log('Login Failed');
-              alert('구글 로그인에 실패했습니다.');
+              showToast('구글 로그인에 실패했습니다.', 'error');
             }}
             useOneTap
             shape="rectangular"
