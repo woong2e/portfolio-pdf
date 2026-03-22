@@ -77,7 +77,7 @@ func CreatePortfolio(c *gin.Context) {
 		ID:               id,
 		CompanyName:      companyName,
 		OriginalFileName: originalFileName,
-		FilePath:         filePath,
+		FilePath:         fmt.Sprintf("%s.pdf", id),
 		CreatedAt:        time.Now(),
 		UpdatedAt:        time.Now(),
 	}
@@ -119,7 +119,7 @@ func UpdatePortfolio(c *gin.Context) {
 		
 		// 실제 파일 경로는 동일하지만(id 기반), 명시적으로 파일명 업데이트
 		portfolio.OriginalFileName = file.Filename
-		portfolio.FilePath = filePath
+		portfolio.FilePath = fmt.Sprintf("%s.pdf", id)
 
 		// 로컬 스토리지의 경우 같은 파일 경로면 자동으로 덮어씁니다.
 		// 만약 파일 경로가 물리적으로 변했다면 이전 파일을 삭제합니다.
@@ -148,7 +148,7 @@ func DeletePortfolio(c *gin.Context) {
 	}
 
 	// 로컬 디스크에서 파일 완전 삭제
-	os.Remove(portfolio.FilePath)
+	os.Remove(filepath.Join(getStoragePath(), filepath.Base(portfolio.FilePath)))
 
 	// DB 레코드 삭제
 	if err := database.DB.Delete(&portfolio).Error; err != nil {

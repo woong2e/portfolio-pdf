@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 	"github.com/woong/portfolio-pdf/backend/database"
@@ -19,7 +20,7 @@ func ViewPortfolio(c *gin.Context) {
 	}
 
 	c.Header("Content-Type", "application/pdf")
-	c.File(portfolio.FilePath)
+	c.File(filepath.Join(getStoragePath(), filepath.Base(portfolio.FilePath)))
 }
 
 func DownloadPortfolio(c *gin.Context) {
@@ -33,5 +34,5 @@ func DownloadPortfolio(c *gin.Context) {
 
 	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", portfolio.OriginalFileName))
 	c.Header("Content-Type", "application/pdf")
-	c.File(portfolio.FilePath)
+	c.File(filepath.Join(getStoragePath(), filepath.Base(portfolio.FilePath)))
 }
