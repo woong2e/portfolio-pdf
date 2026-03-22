@@ -105,6 +105,9 @@ jobs:
             # .env 파일 생성
             echo "$ENV_FILE_CONTENT" > .env
             
+            # docker-compose가 DOCKER_HUB_USERNAME 변수를 사용할 수 있도록 .env에 추가
+            echo "DOCKER_HUB_USERNAME=${{ secrets.DOCKER_HUB_USERNAME }}" >> .env
+            
             # 스크립트 위치 확인 및 실행
             if [ -f "deploy/deploy.sh" ]; then
                 cd deploy
