@@ -3,6 +3,7 @@ import { api } from '../../api/axiosInstance';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { Plus, LogOut, FileText, ChevronRight } from 'lucide-react';
+import { showToast } from '../../components/Toast';
 
 interface Portfolio {
   id: string;
@@ -26,12 +27,11 @@ export default function AdminDashboard() {
   const fetchPortfolios = async () => {
     try {
       const response = await api.get('/admin/portfolios');
-      // 백엔드가 어떻게 반환하는지에 따라 수정 (보통 { data: [...] } 또는 배열 그 자체)
       const data = response.data.data ? response.data.data : response.data;
       setPortfolios(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to fetch portfolios', error);
-      alert('목록을 불러오는데 실패했습니다.');
+      showToast('목록을 불러오는데 실패했습니다.', 'error');
     }
   };
 
@@ -47,7 +47,7 @@ export default function AdminDashboard() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!companyName || !selectedFile) {
-      alert('기업명과 PDF 파일을 모두 입력/선택해주세요.');
+      showToast('기업명과 PDF 파일을 모두 입력/선택해주세요.', 'warning');
       return;
     }
 
@@ -60,7 +60,7 @@ export default function AdminDashboard() {
       await api.post('/admin/portfolio', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      alert('성공적으로 추가되었습니다.');
+      showToast('성공적으로 추가되었습니다.', 'success');
       setIsModalOpen(false);
       setCompanyName('');
       setSelectedFile(null);
@@ -68,7 +68,7 @@ export default function AdminDashboard() {
       fetchPortfolios();
     } catch (error) {
       console.error('Create error', error);
-      alert('추가에 실패했습니다.');
+      showToast('추가에 실패했습니다.', 'error');
     } finally {
       setIsSubmitting(false);
     }
