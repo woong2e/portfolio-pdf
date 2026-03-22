@@ -12,3 +12,11 @@ Thumbs.db
 .env
 .env.local
 .env.*.local
+
+# Backend build artifacts
+backend/server
+backend/build.log
+
+# Backend runtime data
+backend/portfolio.db
+backend/data/
