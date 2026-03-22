@@ -62,7 +62,11 @@ jobs:
 
       - name: Build & Push Frontend Image
         run: |
-          docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/portfolio-frontend:latest -f frontend/Dockerfile frontend
+          docker build \
+            --build-arg VITE_API_BASE_URL=/api \
+            --build-arg VITE_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }} \
+            -t ${{ secrets.DOCKER_HUB_USERNAME }}/portfolio-frontend:latest \
+            -f frontend/Dockerfile frontend
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/portfolio-frontend:latest
 
   deploy:

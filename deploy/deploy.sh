@@ -36,7 +36,7 @@ fi
 SERVICES_TO_PULL=""
 
 if [ "$CHANGED_FRONTEND" = "true" ]; then
-    SERVICES_TO_PULL="$SERVICES_TO_PULL nginx"
+    SERVICES_TO_PULL="$SERVICES_TO_PULL frontend"
 fi
 
 if [ "$CHANGED_BACKEND" = "true" ]; then

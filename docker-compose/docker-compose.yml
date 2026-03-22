@@ -1,15 +1,18 @@
-version: '3.8'
-
 services:
-  # 1. Nginx
-  nginx:
-    image: nginx:latest
-    container_name: nginx
+  # 1. Frontend (React + Nginx)
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+    image: ${DOCKER_HUB_USERNAME}/portfolio-frontend:latest
+    container_name: frontend
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - certbot-etc:/etc/letsencrypt
       - certbot-www:/usr/share/nginx/html
     networks:
@@ -31,7 +34,7 @@ services:
       sleep 12h;
       done"
     depends_on:
-      - nginx
+      - frontend
     restart: always
     networks:
       - app-network
@@ -49,14 +52,14 @@ services:
       while :; do
         CURR="$(cksum "$$FILE" 2>/dev/null || true)";
         if [ "$$CURR" != "$$PREV" ] && [ -n "$$CURR" ]; then
-          echo "[reloader] cert changed -> nginx reload";
-          docker exec nginx nginx -s reload || true;
+          echo "[reloader] cert changed -> frontend reload";
+          docker exec frontend nginx -s reload || true;
           PREV="$$CURR";
         fi;
         sleep 300;
       done'
     depends_on:
-      - nginx
+      - frontend
     restart: always
     networks:
       - app-network
