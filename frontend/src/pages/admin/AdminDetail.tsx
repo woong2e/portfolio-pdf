@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../api/axiosInstance';
 import { ArrowLeft, Copy, Edit2, Trash2, ExternalLink, Calendar, FileText } from 'lucide-react';
+import { showToast } from '../../components/Toast';
+import ConfirmModal from '../../components/ConfirmModal';
 
 interface Portfolio {
   id: string;
@@ -24,6 +26,9 @@ export default function AdminDetail() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Confirm Delete Modal State
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+
   const fetchDetail = async () => {
     try {
       setLoading(true);
@@ -33,7 +38,7 @@ export default function AdminDetail() {
       setEditCompanyName(data.company_name);
     } catch (error) {
       console.error('Fetch error', error);
-      alert('데이터를 불러오지 못했습니다.');
+      showToast('데이터를 불러오지 못했습니다.', 'error');
       navigate('/admin');
     } finally {
       setLoading(false);
@@ -47,26 +52,26 @@ export default function AdminDetail() {
   const handleCopyLink = () => {
     const link = `${window.location.origin}/view/${uuid}`;
     navigator.clipboard.writeText(link).then(() => {
-      alert('링크가 클립보드에 복사되었습니다.');
+      showToast('링크가 클립보드에 복사되었습니다.', 'success');
     });
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
     try {
       await api.delete(`/admin/portfolio/${uuid}`);
-      alert('성공적으로 삭제되었습니다.');
+      showToast('성공적으로 삭제되었습니다.', 'success');
       navigate('/admin');
     } catch (error) {
       console.error('Delete error', error);
-      alert('삭제에 실패했습니다.');
+      showToast('삭제에 실패했습니다.', 'error');
     }
+    setIsDeleteConfirmOpen(false);
   };
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editCompanyName) {
-      alert('기업명을 입력해주세요.');
+      showToast('기업명을 입력해주세요.', 'warning');
       return;
     }
 
@@ -81,18 +86,18 @@ export default function AdminDetail() {
       await api.put(`/admin/portfolio/${uuid}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      alert('성공적으로 수정되었습니다.');
+      showToast('성공적으로 수정되었습니다.', 'success');
       setIsEditModalOpen(false);
       setEditFile(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
       fetchDetail();
       
       const iframe = document.getElementById('preview-iframe') as HTMLIFrameElement;
-      if (iframe) iframe.src = iframe.src; // Reload iframe
+      if (iframe) iframe.src = iframe.src;
 
     } catch (error) {
       console.error('Update error', error);
-      alert('수정에 실패했습니다.');
+      showToast('수정에 실패했습니다.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -187,7 +192,7 @@ export default function AdminDetail() {
             </button>
             
             <button 
-              onClick={handleDelete}
+              onClick={() => setIsDeleteConfirmOpen(true)}
               className="w-full flex items-center justify-center gap-3 bg-rose-50 text-rose-600 hover:bg-rose-100 p-3.5 rounded-xl font-semibold transition-colors mt-6 active:scale-[0.98]"
             >
               <Trash2 size={18} />
@@ -196,6 +201,18 @@ export default function AdminDetail() {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirm Modal */}
+      <ConfirmModal
+        isOpen={isDeleteConfirmOpen}
+        title="포트폴리오 삭제"
+        message="정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없으며, 파일과 메타데이터가 완전히 삭제됩니다."
+        confirmText="삭제"
+        cancelText="취소"
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setIsDeleteConfirmOpen(false)}
+      />
 
       {/* Edit Modal */}
       {isEditModalOpen && (
