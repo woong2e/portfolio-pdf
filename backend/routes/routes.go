@@ -9,20 +9,20 @@ import (
 func SetupRoutes(r *gin.Engine) {
 	api := r.Group("/api")
 	
-	// Public Routes
+	// Public 인증 불필요 API 라우트
 	portfolio := api.Group("/portfolio")
 	{
 		portfolio.GET("/:uuid", handlers.ViewPortfolio)
 		portfolio.GET("/:uuid/download", handlers.DownloadPortfolio)
 	}
 
-	// Admin Auth Route
+	// 관리자용 소셜 로그인 인증 라우트
 	adminAuth := api.Group("/admin")
 	{
 		adminAuth.POST("/login", handlers.GoogleLogin)
 	}
 
-	// Admin Protected Routes
+	// JWT 인증이 필요한 관리자 전용 보호 라우트
 	admin := api.Group("/admin")
 	admin.Use(middleware.AuthMiddleware())
 	{

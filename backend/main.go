@@ -11,23 +11,23 @@ import (
 )
 
 func main() {
-	// Load environment variables if .env exists
+	// .env 파일이 존재하면 로드합니다 (로컬 환경용)
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found, using system environment variables")
 	}
 
-	// Initialize Database
+	// 데이터베이스 초기화 및 연결
 	dbPath := os.Getenv("DB_PATH")
 	if dbPath == "" {
 		dbPath = "portfolio.db"
 	}
 	database.ConnectDB(dbPath)
 
-	// Setup Gin application
+	// Gin 웹 애플리케이션 초기화
 	r := gin.Default()
 
-	// Enable CORS if needed (for separate frontend)
-	// For production, CORS middleware should be configured to restrict origins
+	// CORS 설정 지원 (프론트엔드 통신용)
+	// 프로덕션 환경의 경우 Allowed Origins를 특정 도메인으로 제한하는 것이 좋습니다.
 	r.Use(func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -42,10 +42,10 @@ func main() {
 		c.Next()
 	})
 
-	// Setup API Routes
+	// API 라우터 설정
 	routes.SetupRoutes(r)
 
-	// Start Server
+	// 서버 포트 설정 및 실행
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"

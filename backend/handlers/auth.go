@@ -41,10 +41,10 @@ func GoogleLogin(c *gin.Context) {
 		return
 	}
 
-	// Create our JWT
+	// 서버 자체 JWT 토큰 생성 (유효기간: 24시간)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"email": email,
-		"exp":   time.Now().Add(time.Hour * 24).Unix(), // 24 hours
+		"exp":   time.Now().Add(time.Hour * 24).Unix(), // 24시간 후 만료
 	})
 
 	secret := os.Getenv("JWT_SECRET")

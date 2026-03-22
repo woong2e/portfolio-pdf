@@ -16,9 +16,9 @@ import (
 const portfolioDir = "/data/portfolios"
 
 func init() {
-	// Create portfolio directory if it doesn't exist (local dev fallback)
+	// 포트폴리오 디렉토리가 없으면 생성합니다 (로컬 개발 시 폴백 역할)
 	os.MkdirAll(portfolioDir, os.ModePerm)
-	// Fallback to local ./data/portfolios if /data is not writable/exists
+	// Docker 볼륨 마운트가 실패하거나 없는 경우 로컬 ./data/portfolios 로 폴백
 	if _, err := os.Stat(portfolioDir); os.IsNotExist(err) || os.MkdirAll(portfolioDir, os.ModePerm) != nil {
 		os.MkdirAll("./data/portfolios", os.ModePerm)
 	}
@@ -83,7 +83,7 @@ func CreatePortfolio(c *gin.Context) {
 	}
 
 	if err := database.DB.Create(&portfolio).Error; err != nil {
-		// Clean up file if db commit fails
+		// DB 저장 실패 시 업로드된 파일 삭제 처리
 		os.Remove(filePath)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save to database"})
 		return
@@ -108,7 +108,7 @@ func UpdatePortfolio(c *gin.Context) {
 
 	file, err := c.FormFile("file")
 	if err == nil {
-		// New file uploaded
+		// 새로운 파일이 업로드된 경우의 처리
 		oldPath := portfolio.FilePath
 		filePath := filepath.Join(getStoragePath(), fmt.Sprintf("%s.pdf", id))
 		
@@ -117,12 +117,12 @@ func UpdatePortfolio(c *gin.Context) {
 			return
 		}
 		
-		// Wait, filePath is logically the same, but we update the original name
+		// 실제 파일 경로는 동일하지만(id 기반), 명시적으로 파일명 업데이트
 		portfolio.OriginalFileName = file.Filename
 		portfolio.FilePath = filePath
 
-		// Assuming local storage, it will overwrite the file.
-		// If custom storage is used later, we would delete the old file if filenames were different.
+		// 로컬 스토리지의 경우 같은 파일 경로면 자동으로 덮어씁니다.
+		// 만약 파일 경로가 물리적으로 변했다면 이전 파일을 삭제합니다.
 		if oldPath != filePath {
 			os.Remove(oldPath)
 		}
@@ -147,10 +147,10 @@ func DeletePortfolio(c *gin.Context) {
 		return
 	}
 
-	// Delete file
+	// 로컬 디스크에서 파일 완전 삭제
 	os.Remove(portfolio.FilePath)
 
-	// Delete db record
+	// DB 레코드 삭제
 	if err := database.DB.Delete(&portfolio).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete from database"})
 		return
