@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/woong/portfolio-pdf/backend/database"
 	"github.com/woong/portfolio-pdf/backend/models"
+	"github.com/woong/portfolio-pdf/backend/utils"
 )
 
 const portfolioDir = "/data/portfolios"
@@ -41,7 +41,7 @@ func GetPortfolios(c *gin.Context) {
 }
 
 func GetPortfolio(c *gin.Context) {
-	id := c.Param("uuid")
+	id := c.Param("id")
 	var portfolio models.Portfolio
 
 	if err := database.DB.Where("id = ?", id).First(&portfolio).Error; err != nil {
@@ -64,7 +64,7 @@ func CreatePortfolio(c *gin.Context) {
 		return
 	}
 
-	id := uuid.New().String()
+	id := utils.GenerateShortID(16)
 	originalFileName := file.Filename
 	filePath := filepath.Join(getStoragePath(), fmt.Sprintf("%s.pdf", id))
 
@@ -93,7 +93,7 @@ func CreatePortfolio(c *gin.Context) {
 }
 
 func UpdatePortfolio(c *gin.Context) {
-	id := c.Param("uuid")
+	id := c.Param("id")
 	var portfolio models.Portfolio
 
 	if err := database.DB.Where("id = ?", id).First(&portfolio).Error; err != nil {
@@ -139,7 +139,7 @@ func UpdatePortfolio(c *gin.Context) {
 }
 
 func DeletePortfolio(c *gin.Context) {
-	id := c.Param("uuid")
+	id := c.Param("id")
 	var portfolio models.Portfolio
 
 	if err := database.DB.Where("id = ?", id).First(&portfolio).Error; err != nil {
