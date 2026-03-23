@@ -16,11 +16,11 @@ const MAX_SCALE = 2.5;
 const DEFAULT_SCALE = 1.0;
 
 export default function ViewPortfolio() {
-  const { uuid } = useParams<{ uuid: string }>();
+  const { id } = useParams<{ id: string }>();
   const [numPages, setNumPages] = useState<number>();
   const [scale, setScale] = useState(DEFAULT_SCALE);
 
-  const fileUrl = `${import.meta.env.VITE_API_BASE_URL || '/api'}/portfolio/${uuid}`;
+  const fileUrl = `${import.meta.env.VITE_API_BASE_URL || '/api'}/portfolio/${id}`;
   const downloadUrl = `${fileUrl}/download`;
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {

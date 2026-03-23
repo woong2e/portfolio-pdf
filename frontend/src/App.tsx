@@ -14,13 +14,13 @@ function App() {
         <ToastContainer />
         <Routes>
           <Route path="/" element={<Navigate to="/admin" replace />} />
-          <Route path="/view/:uuid" element={<ViewPortfolio />} />
+          <Route path="/view/:id" element={<ViewPortfolio />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           
           {/* Private Routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/:uuid" element={<AdminDetail />} />
+            <Route path="/admin/:id" element={<AdminDetail />} />
           </Route>
         </Routes>
       </AuthProvider>
