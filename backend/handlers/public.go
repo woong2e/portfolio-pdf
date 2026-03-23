@@ -11,7 +11,7 @@ import (
 )
 
 func ViewPortfolio(c *gin.Context) {
-	id := c.Param("uuid")
+	id := c.Param("id")
 	var portfolio models.Portfolio
 
 	if err := database.DB.Where("id = ?", id).First(&portfolio).Error; err != nil {
@@ -24,7 +24,7 @@ func ViewPortfolio(c *gin.Context) {
 }
 
 func DownloadPortfolio(c *gin.Context) {
-	id := c.Param("uuid")
+	id := c.Param("id")
 	var portfolio models.Portfolio
 
 	if err := database.DB.Where("id = ?", id).First(&portfolio).Error; err != nil {
