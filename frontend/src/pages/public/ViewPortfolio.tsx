@@ -20,7 +20,10 @@ export default function ViewPortfolio() {
   const [numPages, setNumPages] = useState<number>();
   const [scale, setScale] = useState(DEFAULT_SCALE);
 
-  const fileUrl = `${import.meta.env.VITE_API_BASE_URL || '/api'}/portfolio/${id}`;
+  const searchParams = new URLSearchParams(window.location.search);
+  const t = searchParams.get('t');
+
+  const fileUrl = `${import.meta.env.VITE_API_BASE_URL || '/api'}/portfolio/${id}${t ? `?t=${t}` : ''}`;
   const downloadUrl = `${fileUrl}/download`;
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {

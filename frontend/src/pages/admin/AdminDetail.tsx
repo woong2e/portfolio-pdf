@@ -93,7 +93,10 @@ export default function AdminDetail() {
       fetchDetail();
       
       const iframe = document.getElementById('preview-iframe') as HTMLIFrameElement;
-      if (iframe) iframe.src = iframe.src;
+      if (iframe) {
+        const baseUrl = iframe.src.split('?')[0];
+        iframe.src = `${baseUrl}?t=${new Date().getTime()}`;
+      }
 
     } catch (error) {
       console.error('Update error', error);

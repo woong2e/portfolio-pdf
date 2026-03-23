@@ -19,6 +19,9 @@ func ViewPortfolio(c *gin.Context) {
 		return
 	}
 
+	c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+	c.Header("Pragma", "no-cache")
+	c.Header("Expires", "0")
 	c.Header("Content-Type", "application/pdf")
 	c.File(filepath.Join(getStoragePath(), filepath.Base(portfolio.FilePath)))
 }
@@ -32,6 +35,9 @@ func DownloadPortfolio(c *gin.Context) {
 		return
 	}
 
+	c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+	c.Header("Pragma", "no-cache")
+	c.Header("Expires", "0")
 	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", portfolio.OriginalFileName))
 	c.Header("Content-Type", "application/pdf")
 	c.File(filepath.Join(getStoragePath(), filepath.Base(portfolio.FilePath)))
