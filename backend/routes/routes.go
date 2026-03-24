@@ -12,8 +12,8 @@ func SetupRoutes(r *gin.Engine) {
 	// Public 인증 불필요 API 라우트
 	portfolio := api.Group("/portfolio")
 	{
-		portfolio.GET("/:uuid", handlers.ViewPortfolio)
-		portfolio.GET("/:uuid/download", handlers.DownloadPortfolio)
+		portfolio.GET("/:id", handlers.ViewPortfolio)
+		portfolio.GET("/:id/download", handlers.DownloadPortfolio)
 	}
 
 	// 관리자용 소셜 로그인 인증 라우트
@@ -27,9 +27,9 @@ func SetupRoutes(r *gin.Engine) {
 	admin.Use(middleware.AuthMiddleware())
 	{
 		admin.GET("/portfolios", handlers.GetPortfolios)
-		admin.GET("/portfolio/:uuid", handlers.GetPortfolio)
+		admin.GET("/portfolio/:id", handlers.GetPortfolio)
 		admin.POST("/portfolio", handlers.CreatePortfolio)
-		admin.PUT("/portfolio/:uuid", handlers.UpdatePortfolio)
-		admin.DELETE("/portfolio/:uuid", handlers.DeletePortfolio)
+		admin.PUT("/portfolio/:id", handlers.UpdatePortfolio)
+		admin.DELETE("/portfolio/:id", handlers.DeletePortfolio)
 	}
 }

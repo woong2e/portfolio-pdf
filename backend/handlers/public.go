@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 	"github.com/woong/portfolio-pdf/backend/database"
@@ -10,7 +11,7 @@ import (
 )
 
 func ViewPortfolio(c *gin.Context) {
-	id := c.Param("uuid")
+	id := c.Param("id")
 	var portfolio models.Portfolio
 
 	if err := database.DB.Where("id = ?", id).First(&portfolio).Error; err != nil {
@@ -18,12 +19,15 @@ func ViewPortfolio(c *gin.Context) {
 		return
 	}
 
+	c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+	c.Header("Pragma", "no-cache")
+	c.Header("Expires", "0")
 	c.Header("Content-Type", "application/pdf")
-	c.File(portfolio.FilePath)
+	c.File(filepath.Join(getStoragePath(), filepath.Base(portfolio.FilePath)))
 }
 
 func DownloadPortfolio(c *gin.Context) {
-	id := c.Param("uuid")
+	id := c.Param("id")
 	var portfolio models.Portfolio
 
 	if err := database.DB.Where("id = ?", id).First(&portfolio).Error; err != nil {
@@ -31,7 +35,10 @@ func DownloadPortfolio(c *gin.Context) {
 		return
 	}
 
+	c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+	c.Header("Pragma", "no-cache")
+	c.Header("Expires", "0")
 	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", portfolio.OriginalFileName))
 	c.Header("Content-Type", "application/pdf")
-	c.File(portfolio.FilePath)
+	c.File(filepath.Join(getStoragePath(), filepath.Base(portfolio.FilePath)))
 }

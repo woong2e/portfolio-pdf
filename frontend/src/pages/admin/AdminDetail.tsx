@@ -14,7 +14,7 @@ interface Portfolio {
 }
 
 export default function AdminDetail() {
-  const { uuid } = useParams<{ uuid: string }>();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
   const [loading, setLoading] = useState(true);
@@ -32,7 +32,7 @@ export default function AdminDetail() {
   const fetchDetail = async () => {
     try {
       setLoading(true);
-      const res = await api.get(`/admin/portfolio/${uuid}`);
+      const res = await api.get(`/admin/portfolio/${id}`);
       const data = res.data.data ? res.data.data : res.data;
       setPortfolio(data);
       setEditCompanyName(data.company_name);
@@ -47,10 +47,10 @@ export default function AdminDetail() {
 
   useEffect(() => {
     fetchDetail();
-  }, [uuid]);
+  }, [id]);
 
   const handleCopyLink = () => {
-    const link = `${window.location.origin}/view/${uuid}`;
+    const link = `${window.location.origin}/view/${id}`;
     navigator.clipboard.writeText(link).then(() => {
       showToast('링크가 클립보드에 복사되었습니다.', 'success');
     });
@@ -58,7 +58,7 @@ export default function AdminDetail() {
 
   const handleDelete = async () => {
     try {
-      await api.delete(`/admin/portfolio/${uuid}`);
+      await api.delete(`/admin/portfolio/${id}`);
       showToast('성공적으로 삭제되었습니다.', 'success');
       navigate('/admin');
     } catch (error) {
@@ -83,7 +83,7 @@ export default function AdminDetail() {
     }
 
     try {
-      await api.put(`/admin/portfolio/${uuid}`, formData, {
+      await api.put(`/admin/portfolio/${id}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       showToast('성공적으로 수정되었습니다.', 'success');
@@ -93,7 +93,10 @@ export default function AdminDetail() {
       fetchDetail();
       
       const iframe = document.getElementById('preview-iframe') as HTMLIFrameElement;
-      if (iframe) iframe.src = iframe.src;
+      if (iframe) {
+        const baseUrl = iframe.src.split('?')[0];
+        iframe.src = `${baseUrl}?t=${new Date().getTime()}`;
+      }
 
     } catch (error) {
       console.error('Update error', error);
@@ -114,7 +117,7 @@ export default function AdminDetail() {
     );
   }
 
-  const publicLink = `${window.location.origin}/view/${uuid}`;
+  const publicLink = `${window.location.origin}/view/${id}`;
 
   return (
     <div className="h-screen flex flex-col sm:flex-row bg-gray-50 font-sans overflow-hidden">
@@ -126,7 +129,7 @@ export default function AdminDetail() {
         <iframe 
           id="preview-iframe"
           title="Portfolio Preview"
-          src={`/view/${uuid}`}
+          src={`/view/${id}`}
           className="w-full h-full border-0 pt-0 sm:pt-10"
         />
       </div>
