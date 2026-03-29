@@ -3,6 +3,7 @@ import ViewPortfolio from './pages/public/ViewPortfolio';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminDetail from './pages/admin/AdminDetail';
+import AdminSettings from './pages/admin/AdminSettings';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 import ToastContainer from './components/Toast';
@@ -20,6 +21,7 @@ function App() {
           {/* Private Routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/settings" element={<AdminSettings />} />
             <Route path="/admin/:id" element={<AdminDetail />} />
           </Route>
         </Routes>
