@@ -19,7 +19,7 @@ func ConnectDB(dbName string) {
 
 	log.Println("Database connection successful")
 
-	err = DB.AutoMigrate(&models.Portfolio{})
+	err = DB.AutoMigrate(&models.Portfolio{}, &models.Setting{})
 	if err != nil {
 		log.Fatal("Failed to auto-migrate database:", err)
 	}
