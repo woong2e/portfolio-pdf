@@ -138,6 +138,39 @@ func UpdatePortfolio(c *gin.Context) {
 	c.JSON(http.StatusOK, portfolio)
 }
 
+func GetSettings(c *gin.Context) {
+	var settings []models.Setting
+	if err := database.DB.Find(&settings).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch settings"})
+		return
+	}
+	result := make(map[string]string)
+	for _, s := range settings {
+		result[s.Key] = s.Value
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+func UpdateSettings(c *gin.Context) {
+	var input map[string]string
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+	for key, value := range input {
+		setting := models.Setting{
+			Key:       key,
+			Value:     value,
+			UpdatedAt: time.Now(),
+		}
+		if err := database.DB.Save(&setting).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update settings"})
+			return
+		}
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Settings updated successfully"})
+}
+
 func DeletePortfolio(c *gin.Context) {
 	id := c.Param("id")
 	var portfolio models.Portfolio

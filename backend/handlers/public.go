@@ -26,6 +26,19 @@ func ViewPortfolio(c *gin.Context) {
 	c.File(filepath.Join(getStoragePath(), filepath.Base(portfolio.FilePath)))
 }
 
+func GetPublicSettings(c *gin.Context) {
+	var settings []models.Setting
+	if err := database.DB.Find(&settings).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch settings"})
+		return
+	}
+	result := make(map[string]string)
+	for _, s := range settings {
+		result[s.Key] = s.Value
+	}
+	c.JSON(http.StatusOK, result)
+}
+
 func DownloadPortfolio(c *gin.Context) {
 	id := c.Param("id")
 	var portfolio models.Portfolio

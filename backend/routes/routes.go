@@ -10,6 +10,8 @@ func SetupRoutes(r *gin.Engine) {
 	api := r.Group("/api")
 	
 	// Public 인증 불필요 API 라우트
+	api.GET("/settings", handlers.GetPublicSettings)
+
 	portfolio := api.Group("/portfolio")
 	{
 		portfolio.GET("/:id", handlers.ViewPortfolio)
@@ -31,5 +33,7 @@ func SetupRoutes(r *gin.Engine) {
 		admin.POST("/portfolio", handlers.CreatePortfolio)
 		admin.PUT("/portfolio/:id", handlers.UpdatePortfolio)
 		admin.DELETE("/portfolio/:id", handlers.DeletePortfolio)
+		admin.GET("/settings", handlers.GetSettings)
+		admin.PUT("/settings", handlers.UpdateSettings)
 	}
 }
