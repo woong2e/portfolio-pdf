@@ -22,7 +22,7 @@ func setupTestDB(t *testing.T) {
 	if err != nil {
 		t.Fatalf("테스트 DB 연결 실패: %v", err)
 	}
-	if err := db.AutoMigrate(&models.Portfolio{}); err != nil {
+	if err := db.AutoMigrate(&models.Portfolio{}, &models.Setting{}); err != nil {
 		t.Fatalf("테스트 DB 마이그레이션 실패: %v", err)
 	}
 	database.DB = db
@@ -253,5 +253,128 @@ func TestDeletePortfolio_NotFound(t *testing.T) {
 
 	if w.Code != http.StatusNotFound {
 		t.Errorf("응답 코드 %d, 기대값 404", w.Code)
+	}
+}
+
+func TestGetSettings_Empty(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	setupTestDB(t)
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/api/admin/settings", nil)
+
+	GetSettings(c)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("응답 코드 %d, 기대값 200", w.Code)
+	}
+
+	var result map[string]string
+	if err := json.Unmarshal(w.Body.Bytes(), &result); err != nil {
+		t.Fatalf("응답 파싱 실패: %v", err)
+	}
+	if len(result) != 0 {
+		t.Errorf("설정 수 %d, 기대값 0", len(result))
+	}
+}
+
+func TestUpdateSettings_AndGet(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	setupTestDB(t)
+
+	payload := map[string]string{
+		"github_link":   "https://github.com/testuser",
+		"linkedin_link": "https://linkedin.com/in/testuser",
+	}
+	body, _ := json.Marshal(payload)
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodPut, "/api/admin/settings", bytes.NewReader(body))
+	c.Request.Header.Set("Content-Type", "application/json")
+
+	UpdateSettings(c)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("응답 코드 %d, 기대값 200", w.Code)
+	}
+
+	// 저장 후 조회해서 값 검증
+	w2 := httptest.NewRecorder()
+	c2, _ := gin.CreateTestContext(w2)
+	c2.Request = httptest.NewRequest(http.MethodGet, "/api/admin/settings", nil)
+
+	GetSettings(c2)
+
+	var result map[string]string
+	if err := json.Unmarshal(w2.Body.Bytes(), &result); err != nil {
+		t.Fatalf("응답 파싱 실패: %v", err)
+	}
+	if result["github_link"] != "https://github.com/testuser" {
+		t.Errorf("github_link %q, 기대값 %q", result["github_link"], "https://github.com/testuser")
+	}
+	if result["linkedin_link"] != "https://linkedin.com/in/testuser" {
+		t.Errorf("linkedin_link %q, 기대값 %q", result["linkedin_link"], "https://linkedin.com/in/testuser")
+	}
+}
+
+func TestUpdateSettings_Upsert(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	setupTestDB(t)
+
+	// 첫 번째 저장
+	first := map[string]string{"github_link": "https://github.com/old"}
+	body, _ := json.Marshal(first)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodPut, "/api/admin/settings", bytes.NewReader(body))
+	c.Request.Header.Set("Content-Type", "application/json")
+	UpdateSettings(c)
+
+	// 두 번째 저장 (같은 키 덮어쓰기)
+	second := map[string]string{"github_link": "https://github.com/new"}
+	body2, _ := json.Marshal(second)
+	w2 := httptest.NewRecorder()
+	c2, _ := gin.CreateTestContext(w2)
+	c2.Request = httptest.NewRequest(http.MethodPut, "/api/admin/settings", bytes.NewReader(body2))
+	c2.Request.Header.Set("Content-Type", "application/json")
+	UpdateSettings(c2)
+
+	// 조회 후 최신 값 확인
+	w3 := httptest.NewRecorder()
+	c3, _ := gin.CreateTestContext(w3)
+	c3.Request = httptest.NewRequest(http.MethodGet, "/api/admin/settings", nil)
+	GetSettings(c3)
+
+	var result map[string]string
+	if err := json.Unmarshal(w3.Body.Bytes(), &result); err != nil {
+		t.Fatalf("응답 파싱 실패: %v", err)
+	}
+	if result["github_link"] != "https://github.com/new" {
+		t.Errorf("upsert 후 github_link %q, 기대값 %q", result["github_link"], "https://github.com/new")
+	}
+
+	// DB에 github_link 레코드가 1개만 있는지 확인 (중복 insert 없음)
+	var count int64
+	database.DB.Model(&models.Setting{}).Where("key = ?", "github_link").Count(&count)
+	if count != 1 {
+		t.Errorf("github_link 레코드 수 %d, 기대값 1", count)
+	}
+}
+
+func TestUpdateSettings_InvalidJSON(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	setupTestDB(t)
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodPut, "/api/admin/settings", bytes.NewBufferString("not-json"))
+	c.Request.Header.Set("Content-Type", "application/json")
+
+	UpdateSettings(c)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("응답 코드 %d, 기대값 400", w.Code)
 	}
 }
