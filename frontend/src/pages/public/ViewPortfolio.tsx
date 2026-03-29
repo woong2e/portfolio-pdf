@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { Download, Loader2, ZoomIn, ZoomOut } from 'lucide-react';
+import { Download, Loader2, ZoomIn, ZoomOut, Github, Linkedin } from 'lucide-react';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
@@ -15,10 +15,31 @@ const MIN_SCALE = 0.5;
 const MAX_SCALE = 2.5;
 const DEFAULT_SCALE = 1.0;
 
+interface Settings {
+  github_link?: string;
+  linkedin_link?: string;
+}
+
 export default function ViewPortfolio() {
   const { id } = useParams<{ id: string }>();
   const [numPages, setNumPages] = useState<number>();
   const [scale, setScale] = useState(DEFAULT_SCALE);
+  const [settings, setSettings] = useState<Settings>({});
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || '/api'}/settings`);
+        if (res.ok) {
+          const data = await res.json();
+          setSettings(data);
+        }
+      } catch {
+        // 설정 로드 실패 시 링크 버튼 미노출
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const searchParams = new URLSearchParams(window.location.search);
   const t = searchParams.get('t');
@@ -69,13 +90,37 @@ export default function ViewPortfolio() {
           </button>
         </div>
 
-        <a
-          href={downloadUrl}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-5 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md"
-        >
-          <Download size={18} />
-          <span className="hidden sm:inline">PDF 다운로드</span>
-        </a>
+        <div className="flex items-center gap-2">
+          {settings.github_link && (
+            <a
+              href={settings.github_link}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-2 bg-gray-900 hover:bg-black text-white px-4 sm:px-5 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md"
+            >
+              <Github size={18} />
+              <span className="hidden sm:inline">GitHub</span>
+            </a>
+          )}
+          {settings.linkedin_link && (
+            <a
+              href={settings.linkedin_link}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white px-4 sm:px-5 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md"
+            >
+              <Linkedin size={18} />
+              <span className="hidden sm:inline">LinkedIn</span>
+            </a>
+          )}
+          <a
+            href={downloadUrl}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-5 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm hover:shadow-md"
+          >
+            <Download size={18} />
+            <span className="hidden sm:inline">PDF 다운로드</span>
+          </a>
+        </div>
       </header>
 
       {/* Main Content */}

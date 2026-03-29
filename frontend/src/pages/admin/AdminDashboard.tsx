@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../../api/axiosInstance';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { Plus, LogOut, FileText, ChevronRight } from 'lucide-react';
+import { Plus, LogOut, FileText, ChevronRight, Link as LinkIcon } from 'lucide-react';
 import { showToast } from '../../components/Toast';
 
 interface Portfolio {
@@ -84,13 +84,22 @@ export default function AdminDashboard() {
              </div>
              <h1 className="text-xl font-bold text-gray-900">Admin Dashboard</h1>
           </div>
-          <button 
-            onClick={handleLogout}
-            className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors"
-          >
-            <LogOut size={16} />
-            로그아웃
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/admin/settings')}
+              className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
+            >
+              <LinkIcon size={16} />
+              링크 설정
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors"
+            >
+              <LogOut size={16} />
+              로그아웃
+            </button>
+          </div>
         </div>
       </header>
 
